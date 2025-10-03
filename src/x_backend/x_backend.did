@@ -1,0 +1,10 @@
+type Item = record { id : nat64; data : text; state : bool };
+service : {
+  addtolist : (text) -> ();
+  changestate : (nat64) -> ();
+  deleteuser : () -> ();
+  greet : (text) -> (text) query;
+  removeall : () -> ();
+  removetolist : (nat64) -> ();
+  showlist : () -> (vec Item) query;
+}
