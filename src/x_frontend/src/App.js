@@ -28,7 +28,7 @@ class App {
   #handleAddItem = async (e) => {
     e.preventDefault();
     if (this.newItem.trim()) {
-      await x_backend.addtolist(this.newItem.trim());
+      await x_backend.addtolist(this.user, this.newItem.trim());
       this.newItem = '';
       await this.#loadItems();
       this.#render();
@@ -36,25 +36,25 @@ class App {
   };
 
   #handleToggleState = async (id) => {
-    await x_backend.changestate(id);
+    await x_backend.changestate(this.user, id);
     await this.#loadItems();
     this.#render();
   };
 
   #handleRemoveItem = async (id) => {
-    await x_backend.removetolist(id);
+    await x_backend.removetolist(this.user, id);
     await this.#loadItems();
     this.#render();
   };
 
   #handleRemoveAll = async () => {
-    await x_backend.removeall();
+    await x_backend.removeall(this.user);
     await this.#loadItems();
     this.#render();
   };
 
   #handleDeleteUser = async () => {
-    await x_backend.deleteuser();
+    await x_backend.deleteuser(this.user);
     this.user = '';
     this.items = [];
     localStorage.removeItem('name');
@@ -63,7 +63,7 @@ class App {
   };
 
   #loadItems = async () => {
-    this.items = await x_backend.showlist();
+    this.items = await x_backend.showlist(this.user);
   };
 
   #render() {
