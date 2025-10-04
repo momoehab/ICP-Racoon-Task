@@ -1,81 +1,83 @@
 use candid::{CandidType, Deserialize};
 use ic_cdk::query;
 use ic_cdk::update;
-use std::cell::RefCell;
-use std::collections::HashMap;
 
+#[derive(Clone, CandidType, Deserialize)]
+struct List {
+    user: String,
+    items: Vec<Item>,
+}
 #[derive(Clone, CandidType, Deserialize)]
 struct Item {
     id: usize,
     data: String,
     state: bool,
 }
-thread_local! {
-static melist: RefCell<HashMap<String, Vec<Item>>> = RefCell::new(HashMap::new());
-}
-//static mut melist: HashMap<String, Vec<Item>> = HashMap::new();
+
+static mut melist: List = List {
+    user: String::new(),
+    items: Vec::new(),
+};
 
 #[query]
 fn greet(mut name: String) -> String {
     name = name.trim().to_string();
     unsafe {
-        if !melist.contains_key(&name) {
-            melist.insert(name.clone(), Vec::new());
+        if melist.user != name {
+            melist = List {
+                user: name.clone(),
+                items: Vec::new(),
+            };
+        } else {
+            melist.user = name.clone();
         }
     }
     format!("Hello, {}!", name)
 }
 #[query]
-fn showlist(name: String) -> Vec<Item> {
-    unsafe { melist.get(&name).cloned().unwrap_or_default() }
+fn showlist() -> Vec<Item> {
+    unsafe { melist.items.clone() }
 }
 
 #[update]
-fn changestate(name: String, num: usize) {
+fn changestate(num: usize) {
     unsafe {
-        if let Some(x) = melist.get_mut(&name) {
-            if let Some(item) = x.iter_mut().find(|i| i.id == num) {
-                item.state = !item.state;
-            }
-        }
-    }
-}
-
-#[update]
-fn addtolist(name: String, word: String) {
-    unsafe {
-        if let Some(x) = melist.get_mut(&name) {
-            x.push(Item {
-                id: x.len() + 1,
-                data: word,
-                state: false,
-            });
+        if let Some(item) = melist.items.iter_mut().find(|i| i.id == num) {
+            item.state = !item.state;
         }
     }
 }
 
 #[update]
-fn removetolist(name: String, num: usize) {
+fn addtolist(word: String) {
     unsafe {
-        if let Some(x) = melist.get_mut(&name) {
-            if let Some(pos) = x.iter().position(|i| i.id == num) {
-                x.remove(pos);
-            }
+        melist.items.push(Item {
+            id: melist.items.len() + 1,
+            data: word,
+            state: false,
+        });
+    }
+}
+
+#[update]
+fn removetolist(num: usize) {
+    unsafe {
+        if let Some(pos) = melist.items.iter().position(|i| i.id == num) {
+            melist.items.remove(pos);
         }
     }
 }
 #[update]
-fn removeall(name: String) {
+fn removeall() {
     unsafe {
-        if let Some(x) = melist.get_mut(&name) {
-            x.clear();
-        }
+        melist.items.clear();
     }
 }
 #[update]
-fn deleteuser(name: String) {
+fn deleteuser() {
     unsafe {
-        melist.remove(&name);
+        melist.user = "".to_string();
+        melist.items.clear();
     }
 }
 
